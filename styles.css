@@ -39,10 +39,30 @@ nav a{color:var(--cream);text-decoration:none}
 .btn-outline{border-color:var(--forest);color:var(--forest)}.btn-outline:hover{background:var(--forest);color:var(--cream)}
 .cta{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.5rem}
 
-.hero{background:var(--sage);padding:clamp(2.5rem,7vw,5.5rem) 0}
+.hero{
+  position:relative; isolation:isolate; overflow:hidden;
+  background:var(--sage);              /* fallback if the image is missing */
+  padding:clamp(2.5rem,7vw,5.5rem) 0;
+}
+/* Layer 1: the photo, slightly blurred */
+.hero::before{
+  content:""; position:absolute; inset:-12px; z-index:-2;   /* inset hides blur edges */
+  background:url("assets/hero.jpg") center/cover no-repeat;
+  filter:blur(2px);
+}
+/* Layer 2: fade so text stays readable (stronger on the text side) */
+.hero::after{
+  content:""; position:absolute; inset:0; z-index:-1;
+  background:linear-gradient(90deg,
+    rgba(220,231,217,.95) 0%, rgba(220,231,217,.85) 55%, rgba(220,231,217,.6) 100%);
+}
 .hero-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:var(--gap);align-items:center}
 .hero-art{aspect-ratio:1;border-radius:var(--r);background:var(--forest);display:grid;place-items:center;box-shadow:var(--shadow)}
 .hero-art span{font-family:var(--serif);font-weight:700;font-size:clamp(4rem,12vw,8rem);color:var(--cream)}
+
+.story-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:var(--gap);align-items:center}
+.story-photo{margin:0}
+.story-photo img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r);box-shadow:var(--shadow)}
 
 .section{padding:clamp(3rem,7vw,5rem) 0}
 .alt{background:var(--sage)}
@@ -74,5 +94,6 @@ nav a{color:var(--cream);text-decoration:none}
   #nav{display:none;position:absolute;top:100%;left:0;right:0;background:var(--forest);flex-direction:column;align-items:stretch;padding:1rem 1.25rem 1.5rem;gap:.25rem}
   #nav.open{display:flex}
   #nav a{padding:.75rem 0}
+  .story-grid{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
