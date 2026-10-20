@@ -15,7 +15,7 @@ const PAST_EVENTS = [
   { title: "The Outlaw Returns", ...JIMMYS, date: "2022-01-29", time: "3 PM – 8 PM",
     featuring: ["Outlaw Designs","Creative Kitty","Lisa Eye","Sage Candles"],
     description: "Noel at the stick. Trinkets, jewelry, keychains, and other handmade creations.",
-    image: "assets/outlawreturns.jpg", alt: "Poster for The Outlaw Returns, January 29, 2022" },
+    image: "./assets/outlawreturns.jpg", alt: "Poster for The Outlaw Returns, January 29, 2022" },
   { title: "Trinks N’ Drinks", ...JIMMYS, date: "2022-02-19", time: "3 PM – 8 PM",
     featuring: ["Outlaw Designs","Lovecraft Designs","The Eye","Sage Candles","The Plant Lab NYC","FireHouse BBQ","Johnny Burgers"],
     image: "assets/trinks.jpg", alt: "Poster for Trinks N’ Drinks, February 19, 2022" },
