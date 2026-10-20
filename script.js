@@ -34,7 +34,7 @@ const PAST_EVENTS = [
   { title: "Trinks N’ Drinks Returns!", ...JIMMYS, date: "2026-04-25", time: "12:30 PM – midnight",
     featuring: ["Outlaw Designs","Creative Kitty","The Eye","The Plant Lab NYC","FireHouse BBQ"],
     description: "Raffles and prizes, $5 margaritas, custom jewelry, keychains, trinkets, plants, and more.",
-    image: null, alt: "Poster for Trinks N’ Drinks Returns!, April 25, 2026" }
+    image: TDreturns, alt: "Poster for Trinks N’ Drinks Returns!, April 25, 2026" }
 ];
 
 // VENUES
