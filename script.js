@@ -81,17 +81,45 @@ function addressLink(addr) {
   return a;
 }
 
+const fmtShort = iso => new Date(iso + "T00:00:00Z").toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric", year:"numeric", timeZone:"UTC" });
+const PIN = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>';
+const CHEV = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>';
+let uid = 0;
+
+// Compact card: image, title, date/time, venue. Everything else opens under "Details".
 function eventCard(ev) {
-  const card = el("article", "card");
+  const card = el("article", "card event");
   card.append(media(ev, true));
   const b = el("div", "body");
   b.append(el("h3", "", ev.title));
-  if (ev.date) { const p = el("p", "meta"); p.append(el("strong", "", fmtDate(ev.date))); b.append(p); }
-  if (ev.time) b.append(el("p", "meta", ev.time));
-  if (ev.venue) b.append(el("p", "meta", ev.venue));
-  if (ev.address) { const p = el("p", "meta"); p.append(addressLink(ev.address)); b.append(p); }
-  if (ev.featuring && ev.featuring.length) { const p = el("p", "meta"); p.append(el("strong", "", "Featuring: "), ev.featuring.join(", ")); b.append(p); }
-  if (ev.description) b.append(el("p", "", ev.description));
+  if (ev.date || ev.time) {
+    const p = el("p", "meta when");
+    if (ev.date) { const t = el("time", "", fmtShort(ev.date)); t.dateTime = ev.date; p.append(t); }
+    if (ev.date && ev.time) p.append(" · ");
+    if (ev.time) p.append(ev.time);
+    b.append(p);
+  }
+  if (ev.venue) { const p = el("p", "meta place"); p.insertAdjacentHTML("beforeend", PIN); p.append(ev.venue); b.append(p); }
+
+  const rows = [];
+  if (ev.address) { const p = el("p", "meta"); p.append(addressLink(ev.address)); rows.push(p); }
+  if (ev.featuring && ev.featuring.length) { const p = el("p", "meta"); p.append(el("strong", "", "Featuring: "), ev.featuring.join(", ")); rows.push(p); }
+  if (ev.description) rows.push(el("p", "", ev.description));
+  if (rows.length) {
+    const id = "more-" + (++uid), btn = el("button", "more-btn"), label = el("span", "", "Details");
+    btn.type = "button"; btn.setAttribute("aria-expanded", "false"); btn.setAttribute("aria-controls", id);
+    btn.setAttribute("aria-label", "Show details for " + ev.title);
+    btn.append(label); btn.insertAdjacentHTML("beforeend", CHEV);
+    const more = el("div", "more"), inner = el("div", "more-in"); more.id = id; inner.append(...rows); more.append(inner);
+    btn.addEventListener("click", () => {
+      const open = btn.getAttribute("aria-expanded") !== "true";
+      btn.setAttribute("aria-expanded", String(open));
+      btn.setAttribute("aria-label", (open ? "Hide" : "Show") + " details for " + ev.title);
+      label.textContent = open ? "Hide details" : "Details";
+      more.classList.toggle("open", open);
+    });
+    b.append(btn, more);
+  }
   card.append(b);
   return card;
 }
@@ -127,9 +155,44 @@ VENUES.forEach(v => {
 
 // Mobile nav
 const toggle = document.querySelector(".nav-toggle"), nav = document.getElementById("nav");
-const setNav = open => { nav.classList.toggle("open", open); toggle.setAttribute("aria-expanded", open); };
+const setNav = open => { nav.classList.toggle("open", open); toggle.setAttribute("aria-expanded", String(open)); };
 toggle.addEventListener("click", () => setNav(!nav.classList.contains("open")));
 nav.addEventListener("click", e => { if (e.target.closest("a")) setNav(false); });
-document.addEventListener("keydown", e => { if (e.key === "Escape") { setNav(false); toggle.focus(); } });
+document.addEventListener("click", e => { if (!e.target.closest(".site-header")) setNav(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && nav.classList.contains("open")) { setNav(false); toggle.focus(); } });
+matchMedia("(max-width: 960px)").addEventListener("change", () => setNav(false));
+
+// Floating nav is dark glass over the hero and switches to white glass after it
+const header = document.querySelector(".site-header"), heroEl = document.getElementById("top");
+const onScroll = () => header.classList.toggle("on-light", scrollY > heroEl.offsetHeight - 90);
+onScroll(); addEventListener("scroll", onScroll, { passive: true }); addEventListener("resize", onScroll);
+
+// Click ripple on buttons
+document.addEventListener("pointerdown", e => {
+  const b = e.target.closest(".btn"); if (!b) return;
+  const r = b.getBoundingClientRect(), d = Math.max(r.width, r.height), s = el("span", "ripple");
+  s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
+  b.append(s); setTimeout(() => s.remove(), 700);
+});
+
+// Fade panels in as they scroll into view (skipped for reduced motion)
+const items = [...document.querySelectorAll(".card, .empty, .invite, .story-photo")];
+if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  items.forEach((n, k) => { n.classList.add("reveal"); n.style.setProperty("--d", (k % 3) * 90 + "ms"); });
+  const io = new IntersectionObserver((es, o) => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in"); o.unobserve(en.target); } }), { threshold: .12 });
+  items.forEach(n => io.observe(n));
+}
+
+// Highlight the section being read in the nav
+const links = [...document.querySelectorAll('#nav a[href^="#"]')];
+if ("IntersectionObserver" in window) {
+  const spy = new IntersectionObserver(es => es.forEach(en => {
+    if (!en.isIntersecting) return;
+    links.forEach(a => a.removeAttribute("aria-current"));
+    const cur = links.find(a => a.getAttribute("href") === "#" + en.target.id);
+    if (cur) cur.setAttribute("aria-current", "true");
+  }), { rootMargin: "-45% 0px -50% 0px" });
+  document.querySelectorAll("main section[id]").forEach(x => spy.observe(x));
+}
 
 document.getElementById("year").textContent = new Date().getFullYear();
